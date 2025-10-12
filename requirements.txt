@@ -1,0 +1,22 @@
+# LangChain Core
+langchain
+langchain-Core
+langchain-community
+
+# OpenAI Integration
+langchain-openai
+openai
+tiktoken
+
+# Youtube Transcripts Provider
+youtube-transcript-api
+
+# Vector Store
+faiss-cpu
+
+# Environment Variable Management
+python-dotenv
+
+# Machine learning Utilities
+numpy
+scikit-learn
