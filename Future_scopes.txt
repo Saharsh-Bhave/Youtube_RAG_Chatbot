@@ -1,0 +1,2 @@
+1. Create a streamlit website where user can paste a URL, from which the video_id will be scraped.
+(video_id is of 11 characters after "watch?v=")
