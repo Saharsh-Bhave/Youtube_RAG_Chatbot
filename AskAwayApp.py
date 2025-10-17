@@ -62,66 +62,95 @@ def get_transcript(video_id):
         return None
 
 # Streamlit UI
-st.title("Ask Away")
-st.write("Paste a Youtube URL of any video and ask questions about it!")
+st.set_page_config(
+    page_title="YouTube RAG Chatbot",
+    page_icon="🎥",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
+
+st.markdown(
+    """
+    <style>
+        .main-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #FF4B4B;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+    </style>
+    <div class="main-title">🎥 Ask Away</div>
+    <div class="subtitle">Ask questions about any YouTube video — powered by AI</div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Input of URL and user's question
-youtube_url = st.text_input("YouTube URL")
-user_question = st.text_input("Quiz me on the video!")
+with st.form("youtube_form"):
+    youtube_url = st.text_input("🎬 Enter YouTube URL", placeholder="Paste link here")
+    user_question = st.text_input("💬 Your Question", placeholder="Ask anything")
+    submit_button = st.form_submit_button("Ask AI 🎯")
 
-if youtube_url and user_question:
-    video_id = extract_video_id(youtube_url)
-
-    if not video_id:
-        st.error("Invalid YouTube URL!")
-    else:
-        with st.spinner("Getting the Transcripts..."):
-            transcript = get_transcript(video_id)
+if submit_button:
         
-        if not transcript:
-            st.error("No Transcript available for this video.")
+    if youtube_url and user_question:
+        video_id = extract_video_id(youtube_url)
+
+        if not video_id:
+            st.error("Invalid YouTube URL!")
         else:
-            splitter = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap = 200)
-            chunks = splitter.create_documents([transcript])
+            with st.spinner("Getting the Transcripts..."):
+                transcript = get_transcript(video_id)
+            
+            if not transcript:
+                st.error("No Transcript available for this video.")
+            else:
+                splitter = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap = 200)
+                chunks = splitter.create_documents([transcript])
 
-            #using the following embedding model to create embeddings of the question and the transcript
-            embeddings = OpenAIEmbeddings(model = "text-embedding-3-small")
-            #we provide our chunks along with our embedding model to the vector store to create an embedding for each chunk
-            vector_store = FAISS.from_documents(chunks, embeddings)
-            # retrieve using our vector store, that will use a simple similarity search and get 4 most similar results in the output.
-            retriever = vector_store.as_retriever(search_type = "similarity", search_kwargs = {"k": 4})
-            # Creating a prompt template with user query and retrieved context(documents) to be provided to the LLM
-            #
-            prompt = PromptTemplate(
-                template = """
-                    You are a helpful assistant.
-                    Answer the Question ONLY from the provided transcript context.
-                    If the context is insufficient, just say you do not know.
-                    
-                    Context:
-                    {context}
+                #using the following embedding model to create embeddings of the question and the transcript
+                embeddings = OpenAIEmbeddings(model = "text-embedding-3-small")
+                #we provide our chunks along with our embedding model to the vector store to create an embedding for each chunk
+                vector_store = FAISS.from_documents(chunks, embeddings)
+                # retrieve using our vector store, that will use a simple similarity search and get 4 most similar results in the output.
+                retriever = vector_store.as_retriever(search_type = "similarity", search_kwargs = {"k": 4})
+                # Creating a prompt template with user query and retrieved context(documents) to be provided to the LLM
+                #
+                prompt = PromptTemplate(
+                    template = """
+                        You are a helpful assistant.
+                        Answer the Question ONLY from the provided transcript context.
+                        If the context is insufficient, just say you do not know.
+                        
+                        Context:
+                        {context}
 
-                    Question: {question}
-                """,
-                input_variables= ['context', 'question']
-            )
-            # Format retrieved docs to create the complete context
-            def format_docs(retrieved_docs):
-                return " ".join(doc.page_content for doc in retrieved_docs)
-            
-            parallel_chain = RunnableParallel({
-                'context': retriever | RunnableLambda(format_docs),
-                'question': RunnablePassthrough()
-            })
-            # Forming an LLM
-            #
-            llm = ChatOpenAI(model = "gpt-4o-mini", temperature=0.2)
-            parser = StrOutputParser()
-            main_chain = parallel_chain | prompt | llm | parser
-            
-            # Invoke the chain
-            with st.spinner("Generating your answer..."):
-                answer = main_chain.invoke(user_question)
-            
-            st.subheader("Answer")
-            st.write(answer)
+                        Question: {question}
+                    """,
+                    input_variables= ['context', 'question']
+                )
+                # Format retrieved docs to create the complete context
+                def format_docs(retrieved_docs):
+                    return " ".join(doc.page_content for doc in retrieved_docs)
+                
+                parallel_chain = RunnableParallel({
+                    'context': retriever | RunnableLambda(format_docs),
+                    'question': RunnablePassthrough()
+                })
+                # Forming an LLM
+                #
+                llm = ChatOpenAI(model = "gpt-4o-mini", temperature=0.2)
+                parser = StrOutputParser()
+                main_chain = parallel_chain | prompt | llm | parser
+                
+                # Invoke the chain
+                with st.spinner("Generating your answer..."):
+                    answer = main_chain.invoke(user_question)
+                st.markdown(f"<div class='answer-box'><b>Answer:</b><br>{answer}</div>", unsafe_allow_html=True)
