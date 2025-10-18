@@ -15,59 +15,6 @@ load_dotenv()
 # uppercase, lowercase, numericals, hyphens, or underscores.
 # In the long format, the video_id is preceeded by either "v=" or "/" and in short format by ".be/"
 #
-# Streamlit UI
-st.set_page_config(
-    page_title="YouTube RAG Chatbot",
-    page_icon="🎥",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
-#
-# Dark Page theme Styling
-#
-st.markdown("""
-<style>
-.stApp {
-    background-color: #0E1117;
-    color: white;
-    font-family: "Segoe UI", sans-serif;
-}
-
-/* Hide 'Press Enter to submit' text */
-div[data-testid="stTextInput"] > div > div > div > div:nth-child(2) {
-    display: none !important;
-}
-
-/* Make input boxes dark */
-[data-baseweb="input"] > div {
-    background-color: #1E1E1E !important;
-    color: white !important;
-    border: 1px solid #444 !important;
-    border-radius: 8px !important;
-}
-
-/* Input placeholder color */
-[data-baseweb="input"] input::placeholder {
-    color: #888 !important;
-}
-
-/* Stylish answer box */
-.answer-box {
-    background-color: #1E1E1E;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 0px 8px rgba(255,255,255,0.05);
-    margin-top: 20px;
-}
-</style>
-""", unsafe_allow_html=True)
-#
-# Header
-st.markdown("<h1 style='text-align:center;'>🎬 YouTube RAG Chatbot</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;color:gray;'>Ask any question about a YouTube video transcript!</p>", unsafe_allow_html=True)
-#
-# Functions
-#
 def extract_video_id(url):
     patterns = [
         r"(?:v=|\/)([0-9A-Za-z_-]{11}).*",  # pattern for long URL
@@ -113,7 +60,38 @@ def get_transcript(video_id):
 
     except TranscriptsDisabled:
         return None
-    
+
+# Streamlit UI
+st.set_page_config(
+    page_title="YouTube RAG Chatbot",
+    page_icon="🎥",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
+
+st.markdown(
+    """
+    <style>
+        .main-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #FF4B4B;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+    </style>
+    <div class="main-title">🎥 Ask Away</div>
+    <div class="subtitle">Ask questions about any YouTube video — powered by AI</div>
+    """,
+    unsafe_allow_html=True
+)
+
 # Input of URL and user's question
 with st.form("youtube_form"):
     youtube_url = st.text_input("🎬 Enter YouTube URL", placeholder="Paste link here")
@@ -168,17 +146,11 @@ if submit_button:
                 })
                 # Forming an LLM
                 #
-                llm = ChatOpenAI(model = "gpt-4o-mini", temperature=0.2, streaming= True)
+                llm = ChatOpenAI(model = "gpt-4o-mini", temperature=0.2)
                 parser = StrOutputParser()
                 main_chain = parallel_chain | prompt | llm | parser
                 
-                st.markdown("<div class='answer-box'>", unsafe_allow_html=True)
-                st.write("**Answer:**")
-
-                    # Stream the answer gradually
-                answer_container = st.empty()
-                answer_text = ""
-                for chunk in main_chain.stream(user_question):
-                     answer_text += chunk
-                     answer_container.markdown(answer_text)
-                st.markdown("</div>", unsafe_allow_html=True)
+                # Invoke the chain
+                with st.spinner("Generating your answer..."):
+                    answer = main_chain.invoke(user_question)
+                st.markdown(f"<div class='answer-box'><b>Answer:</b><br>{answer}</div>", unsafe_allow_html=True)
