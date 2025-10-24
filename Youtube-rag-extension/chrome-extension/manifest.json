@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Youtube RAG Chatbot",
+    "name": "TubeMind",
     "version": 1.0,
-    "description": "Chat with any YouTube video using AI-powered responses.",
+    "description": "Chat with any YouTube video using RAG based AI-powered responses.",
     "permissions": ["activeTab", "scripting"],
     "host_permissions": ["https://www.youtube.com/*"],
     "action": {
