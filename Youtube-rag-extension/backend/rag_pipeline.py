@@ -4,6 +4,9 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import PromptTemplate
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_answer(video_id: str, question: str) -> str:
     YTapi = YouTubeTranscriptApi()
