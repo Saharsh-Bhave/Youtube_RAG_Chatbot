@@ -1,7 +1,7 @@
 # Youtube_RAG_Chatbot
 RAG based chatbot to ask questions about any youtube video.
 
-Also contains the extension for the same chatbot that can be run locally. 
+Also contains the Extension for the same chatbot that can be run locally. 
 
 Steps to run the extension locally on your system:
 1. Clone the repository
