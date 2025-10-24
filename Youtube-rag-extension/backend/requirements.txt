@@ -1,0 +1,19 @@
+# Fast API connection
+fastapi
+
+# Uvicorn: asynchronous server gateway Inetrface for FastAPI web applications
+uvicorn
+
+# LangChain core
+langchain
+langchain-openai
+langchain-community
+
+# YouTube Transcripts
+youtube-transcript-api
+
+# Vector store
+faiss-cpu
+
+# OpenAI LLM integration
+openai
