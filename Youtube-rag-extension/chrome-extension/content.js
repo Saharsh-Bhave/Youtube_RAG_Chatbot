@@ -1,0 +1,1 @@
+console.log("TubeMind is active on this page!")
