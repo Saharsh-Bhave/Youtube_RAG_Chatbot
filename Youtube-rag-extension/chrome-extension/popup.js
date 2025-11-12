@@ -12,7 +12,7 @@ document.getElementById("askBtn").addEventListener("click", async () =>{
     document.getElementById("response").innerText = "Thinking...";
 
     try{
-        const res = await fetch("https://youtube-rag-api.onrender.com/ask", {
+        const res = await fetch("http://127.0.0.1:8000/ask", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({question, video_id: videoId}),
